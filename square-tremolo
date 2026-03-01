@@ -1,0 +1,38 @@
+desc: Square Tremolo
+//tags: tremolo modulation slicer
+//author: Valtteri Virtanen
+
+// Note: Slightly modified version of Reaper's stock tremolo plugin
+
+slider1:4<0,100,1>Frequency (Hz)
+slider2:-60<-60,0,1>Off-Level (dB)
+slider3:0.5<0,1,0.01>Duty Cycle (Pulse Width)
+
+in_pin:left input
+in_pin:right input
+out_pin:left output
+out_pin:right output
+
+@init
+pos = 0;
+
+@slider
+// Calculate how much the phase advances per sample
+// We use 1.0 as the cycle length for simplicity
+adv = slider1 / srate;
+
+// Convert the "Off" level from dB to gain
+off_gain = 2 ^ (slider2 / 6);
+
+@sample
+// Determine if we are in the "ON" or "OFF" part of the cycle
+// if pos < duty_cycle, multiplier is 1.0 (ON)
+// otherwise, multiplier is off_gain (OFF)
+multiplier = (pos < slider3) ? 1.0 : off_gain;
+
+spl0 *= multiplier;
+spl1 *= multiplier;
+
+// Advance phase and wrap around at 1.0
+pos += adv;
+pos >= 1.0 ? pos -= 1.0;
